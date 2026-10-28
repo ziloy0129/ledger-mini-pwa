@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ledger Mini">
+  <meta name="description" content="A private, offline-first customer and order manager.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Ledger Mini</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PRIVATE WORKSPACE</p>
+        <h1>Ledger<span>Mini</span></h1>
+      </div>
+      <button class="avatar" id="quickAdd" aria-label="新增">＋</button>
+    </header>
+
+    <main id="mainContent">
+      <section class="view active" id="dashboardView">
+        <div class="welcome">
+          <div>
+            <p class="muted small" id="todayLabel">YOUR BUSINESS AT A GLANCE</p>
+            <h2>工作概览</h2>
+          </div>
+          <span class="private-pill"><i></i> 本机存储</span>
+        </div>
+
+        <div class="hero-card">
+          <div class="hero-top">
+            <span>订单总金额</span>
+            <span class="hero-icon">↗</span>
+          </div>
+          <div class="hero-value" id="totalValue">$0.00</div>
+          <div class="hero-bottom">
+            <span id="orderCountLabel">0 笔订单</span>
+            <span class="hero-note">AUD · 全部订单</span>
+          </div>
+          <div class="hero-decoration"></div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-head"><span class="stat-icon indigo">◎</span><span class="muted">客户</span></div>
+            <strong id="customerCount">0</strong>
+            <span class="stat-caption">已保存客户</span>
+          </article>
+          <article class="stat-card">
+            <div class="stat-head"><span class="stat-icon amber">◷</span><span class="muted">待处理</span></div>
+            <strong id="pendingCount">0</strong>
+            <span class="stat-caption">待处理订单</span>
+          </article>
+        </div>
+
+        <div class="section-heading">
+          <div><p class="eyebrow">LATEST ACTIVITY</p><h3>最近订单</h3></div>
+          <button class="text-button" data-nav="orders">查看全部</button>
+        </div>
+        <div id="recentOrders" class="list-stack"></div>
+
+        <div class="privacy-note">
+          <span class="privacy-symbol">⌁</span>
+          <div><strong>你的数据，只留在这台设备</strong><p>当前版本不连接服务器。请定期导出备份，避免清除浏览器数据后丢失记录。</p></div>
+        </div>
+      </section>
+
+      <section class="view" id="customersView">
+        <div class="page-heading">
+          <div><p class="eyebrow">RELATIONSHIPS</p><h2>客户</h2></div>
+          <button class="primary-button compact" id="addCustomerBtn">＋ 新客户</button>
+        </div>
+        <label class="search-box"><span>⌕</span><input id="customerSearch" type="search" placeholder="搜索客户名称、联系人…" autocomplete="off"></label>
+        <div class="list-meta" id="customerListMeta">0 位客户</div>
+        <div id="customersList" class="list-stack"></div>
+      </section>
+
+      <section class="view" id="ordersView">
+        <div class="page-heading">
+          <div><p class="eyebrow">SALES & OPERATIONS</p><h2>订单</h2></div>
+          <button class="primary-button compact" id="addOrderBtn">＋ 新订单</button>
+        </div>
+        <label class="search-box"><span>⌕</span><input id="orderSearch" type="search" placeholder="搜索订单、客户…" autocomplete="off"></label>
+        <div class="filter-row" id="orderFilters">
+          <button class="filter-chip selected" data-filter="all">全部</button>
+          <button class="filter-chip" data-filter="待处理">待处理</button>
+          <button class="filter-chip" data-filter="处理中">处理中</button>
+          <button class="filter-chip" data-filter="已完成">已完成</button>
+          <button class="filter-chip" data-filter="已取消">已取消</button>
+        </div>
+        <div class="list-meta" id="orderListMeta">0 笔订单</div>
+        <div id="ordersList" class="list-stack"></div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="page-heading">
+          <div><p class="eyebrow">YOUR WORKSPACE</p><h2>设置</h2></div>
+        </div>
+        <article class="settings-card">
+          <div class="settings-mark">LM</div>
+          <div><strong>Ledger Mini</strong><p>客户与订单管理 · 离线优先</p></div>
+          <span class="version-pill">v1.0</span>
+        </article>
+        <div class="settings-section">
+          <p class="eyebrow">DATA MANAGEMENT</p>
+          <button class="settings-action" id="exportBtn"><span class="action-icon">↥</span><span><strong>导出数据备份</strong><small>下载客户和订单 JSON 文件</small></span><b>›</b></button>
+          <button class="settings-action" id="importBtn"><span class="action-icon">↧</span><span><strong>导入数据备份</strong><small>从之前导出的 JSON 恢复</small></span><b>›</b></button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+        <div class="settings-section">
+          <p class="eyebrow">ABOUT YOUR DATA</p>
+          <div class="about-row"><span>保存位置</span><strong>当前浏览器</strong></div>
+          <div class="about-row"><span>云端同步</span><strong class="off-label">未启用</strong></div>
+          <div class="about-row"><span>客户数量</span><strong id="settingsCustomerCount">0</strong></div>
+          <div class="about-row"><span>订单数量</span><strong id="settingsOrderCount">0</strong></div>
+        </div>
+        <button class="danger-button" id="clearDataBtn">清除本机全部数据</button>
+        <p class="footnote">请勿将此 MVP 当作唯一的业务记录系统。设备损坏、浏览器数据被清除或误操作都可能导致数据丢失。JSON 备份文件也可能包含个人信息，请妥善保管。</p>
+      </section>
+    </main>
+
+    <nav class="tabbar" aria-label="主导航">
+      <button class="tab active" data-view="dashboard"><span class="tab-icon">⌂</span><span>概览</span></button>
+      <button class="tab" data-view="customers"><span class="tab-icon">◎</span><span>客户</span></button>
+      <button class="tab" data-view="orders"><span class="tab-icon">▤</span><span>订单</span></button>
+      <button class="tab" data-view="settings"><span class="tab-icon">⚙</span><span>设置</span></button>
+    </nav>
+  </div>
+
+  <dialog id="customerDialog" class="sheet-dialog">
+    <form id="customerForm" class="dialog-form">
+      <div class="sheet-handle"></div>
+      <div class="dialog-heading"><div><p class="eyebrow">CUSTOMER DETAILS</p><h2 id="customerDialogTitle">新客户</h2></div><button type="button" class="close-button" data-close="customerDialog">×</button></div>
+      <input type="hidden" id="customerId">
+      <label>客户名称 <em>*</em><input id="customerName" required maxlength="100" placeholder="例如：Acme Pty Ltd"></label>
+      <label>联系人<input id="customerContact" maxlength="100" placeholder="联系人姓名"></label>
+      <div class="form-grid">
+        <label>电话<input id="customerPhone" type="tel" maxlength="40" placeholder="电话"></label>
+        <label>邮箱<input id="customerEmail" type="email" maxlength="150" placeholder="name@example.com"></label>
+      </div>
+      <label>备注<textarea id="customerNotes" rows="3" maxlength="1000" placeholder="其他信息…"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="customerDialog">取消</button><button type="submit" class="primary-button">保存客户</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="orderDialog" class="sheet-dialog">
+    <form id="orderForm" class="dialog-form">
+      <div class="sheet-handle"></div>
+      <div class="dialog-heading"><div><p class="eyebrow">ORDER DETAILS</p><h2 id="orderDialogTitle">新订单</h2></div><button type="button" class="close-button" data-close="orderDialog">×</button></div>
+      <input type="hidden" id="orderId">
+      <label>订单名称 <em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如：Storage & handling"></label>
+      <label>客户 <select id="orderCustomer"><option value="">选择客户（可选）</option></select></label>
+      <div class="form-grid">
+        <label>金额（AUD）<em>*</em><input id="orderAmount" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+        <label>状态<select id="orderStatus"><option>待处理</option><option>处理中</option><option>已完成</option><option>已取消</option></select></label>
+      </div>
+      <div class="form-grid">
+        <label>订单日期<input id="orderDate" type="date" required></label>
+        <label>交付日期<input id="orderDueDate" type="date"></label>
+      </div>
+      <label>备注<textarea id="orderNotes" rows="3" maxlength="1000" placeholder="订单说明…"></textarea></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="orderDialog">取消</button><button type="submit" class="primary-button">保存订单</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="detailDialog" class="sheet-dialog">
+    <div class="dialog-form">
+      <div class="sheet-handle"></div>
+      <div class="dialog-heading"><div><p class="eyebrow" id="detailEyebrow">DETAILS</p><h2 id="detailTitle">详情</h2></div><button type="button" class="close-button" data-close="detailDialog">×</button></div>
+      <div id="detailBody" class="detail-body"></div>
+      <div class="dialog-actions"><button type="button" class="secondary-button" id="detailDeleteBtn">删除</button><button type="button" class="secondary-button" data-close="detailDialog">关闭</button><button type="button" class="primary-button" id="detailEditBtn">编辑</button></div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
+</body>
+</html>
