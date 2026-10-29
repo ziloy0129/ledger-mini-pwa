@@ -239,7 +239,7 @@
       @media(max-width:650px){.paper{padding:22px 16px;margin:0}.brandrow{gap:12px}.brandmark{font-size:20px}.supplier{font-size:10px}.meta{gap:12px;font-size:10px}.meta-right b{white-space:normal}table{font-size:9px}th,td{padding:7px 3px}th:first-child{width:39%}th:nth-child(2){width:8%}th:nth-child(3){width:9%}th:nth-child(4){width:14%}th:nth-child(5){width:10%}th:nth-child(6){width:20%}.num{white-space:normal}.payment{grid-template-columns:1fr}.toolbar{padding:10px}}
       @media print{body{background:#fff;font-size:11px}.toolbar{display:none}.paper{max-width:none;margin:0;padding:0;box-shadow:none}@page{size:A4;margin:14mm}tr{break-inside:avoid}.section{break-inside:avoid}}
     </style></head><body>
-      <div class="toolbar"><button class="back" onclick="if(history.length>1)history.back();else window.close()">← 返回订单</button><button class="pdf" onclick="window.print()">↓ 下载 / 保存 PDF</button></div>
+      <div class="toolbar"><button class="back" onclick="if(history.length>1)history.back();else window.close()">← 返回订单</button><button class="pdf" id="downloadPdfBtn">↓ 下载 PDF</button></div>
       <main class="paper">
         <div class="brandrow"><div class="brandmark">${escapeHTML(b.name || "YOUR BUSINESS")}<br><span>INVOICE</span></div>
           <div class="supplier"><strong>${escapeHTML(b.name || "")}</strong>${b.abn ? `<br><b>ABN:</b> ${escapeHTML(b.abn)}` : ""}${b.address ? `<br>${escapeHTML(b.address).replace(/\n/g,"<br>")}` : ""}${b.phone ? `<br><b>Ph:</b> ${escapeHTML(b.phone)}` : ""}${b.remittanceEmail ? `<br>${escapeHTML(b.remittanceEmail)}` : ""}</div></div>
@@ -253,7 +253,35 @@
           <div><b>Amount Owing:</b> ${money(total)}<br>${order.dueDate ? `<b>Due Date:</b> ${escapeHTML(order.dueDate)}<br>` : ""}<b>Payment Reference:</b> ${escapeHTML(number)}</div></div></section>
         ${b.contact ? `<section class="section"><h3>Contact</h3>${escapeHTML(b.contact)}${b.phone ? ` · ${escapeHTML(b.phone)}` : ""}</section>` : ""}
         <div class="thanks">Thank you for your business.</div>
-      </main></body></html>`;
+      </main>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"><\/script>
+      <script>
+        document.getElementById("downloadPdfBtn").addEventListener("click", async function() {
+          const button = this;
+          if (typeof html2pdf === "undefined") {
+            alert("PDF 下载组件加载失败。请检查网络连接后重新打开 Invoice 页面。");
+            return;
+          }
+          button.disabled = true;
+          button.textContent = "正在生成 PDF…";
+          try {
+            await html2pdf().set({
+              margin: [10, 10, 10, 10],
+              filename: ${json.dumps(number)},
+              image: { type: "jpeg", quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+              jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+              pagebreak: { mode: ["css", "legacy"] }
+            }).from(document.querySelector(".paper")).save();
+          } catch (error) {
+            alert("PDF 生成失败，请刷新 Invoice 页面后重试。");
+          } finally {
+            button.disabled = false;
+            button.textContent = "↓ 下载 PDF";
+          }
+        });
+      </script>
+      </body></html>`;
     invoiceWindow.document.open(); invoiceWindow.document.write(doc); invoiceWindow.document.close();
   }
 
