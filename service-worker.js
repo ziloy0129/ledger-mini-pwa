@@ -1,4 +1,4 @@
-const CACHE_NAME = "ledger-mini-v12";
+const CACHE_NAME = "ledger-mini-v13";
 const APP_FILES = [
   "./",
   "./index.html",

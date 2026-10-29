@@ -115,3 +115,61 @@
 #orderForm input[type="date"]{display:block;width:100%;max-width:100%;min-width:0;height:44px;padding:10px 8px;font-size:12px;box-sizing:border-box}
 #orderForm .form-grid input,#orderForm .form-grid select{min-width:0;max-width:100%;box-sizing:border-box}
 @media(max-width:380px){#orderForm .form-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Definitive iOS layout fix for order amount required marker and date fields */
+#orderForm label:has(> span + em){
+  display:grid !important;
+  grid-template-columns:max-content max-content !important;
+  grid-template-rows:auto auto !important;
+  align-items:center !important;
+  justify-content:start !important;
+  column-gap:6px !important;
+  row-gap:8px !important;
+}
+#orderForm label:has(> span + em) > span{
+  display:inline !important;
+  grid-column:1 !important;
+  grid-row:1 !important;
+  white-space:nowrap !important;
+}
+#orderForm label:has(> span + em) > em{
+  display:inline !important;
+  grid-column:2 !important;
+  grid-row:1 !important;
+  justify-self:start !important;
+  margin:0 !important;
+  line-height:1 !important;
+}
+#orderForm label:has(> span + em) > input{
+  grid-column:1 / -1 !important;
+  grid-row:2 !important;
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+  box-sizing:border-box !important;
+}
+#orderForm .form-grid:has(#orderDate){
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  gap:12px !important;
+  width:100% !important;
+}
+#orderForm .form-grid:has(#orderDate) > label{
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) !important;
+  width:100% !important;
+  min-width:0 !important;
+}
+#orderForm #orderDate,
+#orderForm #orderDueDate{
+  display:block !important;
+  width:100% !important;
+  min-width:0 !important;
+  max-width:100% !important;
+  inline-size:100% !important;
+  box-sizing:border-box !important;
+  -webkit-appearance:none;
+  appearance:none;
+  overflow:hidden;
+}
