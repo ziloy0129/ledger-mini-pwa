@@ -52,3 +52,14 @@
   .app-shell{padding-bottom:20px}
   .view{padding-bottom:28px}
 }
+
+/* Navigation interaction fix: keep menu trigger above the app header and backdrop */
+.topbar{position:relative;z-index:35}
+.topbar-actions{position:relative;z-index:36}
+.menu-toggle{position:relative;z-index:37;display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;cursor:pointer;flex:0 0 42px;touch-action:manipulation}
+.sidebar-backdrop{z-index:40}
+.sidebar{z-index:41}
+.sidebar.open{pointer-events:auto}
+.sidebar-nav,.side-link{pointer-events:auto;touch-action:manipulation}
+
+.sidebar-backdrop{inset:70px 0 0 0;z-index:30}.sidebar{z-index:31}.topbar{z-index:32}.topbar-actions{z-index:33}.menu-toggle{z-index:34}
