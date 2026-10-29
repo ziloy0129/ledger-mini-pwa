@@ -192,7 +192,7 @@
       <div class="sheet-handle"></div>
       <div class="dialog-heading"><div><p class="eyebrow">ORDER DETAILS</p><h2 id="orderDialogTitle">新订单</h2></div><button type="button" class="close-button" data-close="orderDialog">×</button></div>
       <input type="hidden" id="orderId">
-      <label><span>订单名称</span><em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如：Storage & handling"></label>
+      <label><span>订单名称</span><em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如: OT - Appointment"></label>
       <label>客户 <select id="orderCustomer"><option value="">选择客户（可选）</option></select></label>
       <div class="form-grid">
         <label class="calculated-amount-label"><span>订单金额（AUD）</span><input id="orderAmount" type="number" min="0" step="0.01" readonly aria-readonly="true" inputmode="none" placeholder="由收费项目自动计算"><small class="field-hint">根据收费项目的数量、单价及 GST 自动计算</small></label>
@@ -216,9 +216,9 @@
       <div class="sheet-handle"></div>
       <div class="dialog-heading"><div><p class="eyebrow">BILLABLE SERVICE</p><h2 id="projectDialogTitle">新项目</h2></div><button type="button" class="close-button" data-close="projectDialog">×</button></div>
       <input type="hidden" id="projectId">
-      <label><span>项目名称</span><em>*</em><input id="projectName" required maxlength="120" placeholder="例如：Storage fee"></label>
+      <label><span>项目名称</span><em>*</em><input id="projectName" required maxlength="120" placeholder="例如：Traveling/Meeting"></label>
       <div class="form-grid">
-        <label>单位<input id="projectUnit" maxlength="30" placeholder="例如：hour / pallet / trip" value="unit"></label>
+        <label>单位<input id="projectUnit" maxlength="30" placeholder="例如：hour / KM" value="unit"></label>
         <label><span>单价（AUD）</span><em>*</em><input id="projectRate" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
       </div>
       <label>说明<input id="projectDescription" maxlength="300" placeholder="可选"></label>
