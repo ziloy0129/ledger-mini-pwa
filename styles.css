@@ -173,3 +173,24 @@
   appearance:none;
   overflow:hidden;
 }
+
+/* Order total is calculated from selected line items, not manually editable */
+#orderForm #orderAmount[readonly]{
+  background:#f1f4f9 !important;
+  color:#364152;
+  font-weight:750;
+  cursor:default;
+  -webkit-text-fill-color:#364152;
+}
+#orderForm .calculated-amount-label{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:7px;
+}
+#orderForm .field-hint{
+  display:block;
+  font-size:11px;
+  line-height:1.45;
+  color:#8791a2;
+  font-weight:400;
+}
