@@ -82,3 +82,36 @@
 .dialog-form label:has(> span + em)>input,
 .dialog-form label:has(> span + em)>select,
 .dialog-form label:has(> span + em)>textarea{grid-column:1/-1;grid-row:2}
+
+/* Fix overlapping date fields in the order form */
+#orderForm .form-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:12px;
+  width:100%;
+  align-items:start;
+}
+#orderForm .form-grid > label{
+  min-width:0;
+  width:100%;
+}
+#orderForm input[type="date"]{
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  padding-left:9px;
+  padding-right:7px;
+  font-size:12px;
+}
+@media(max-width:380px){
+  #orderForm .form-grid{grid-template-columns:minmax(0,1fr);gap:0}
+}
+
+/* Fix overlapping date controls in the order form */
+#orderForm .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:14px;row-gap:12px;align-items:start}
+#orderForm .form-grid>label{display:flex;flex-direction:column;align-items:stretch;min-width:0;width:100%;margin:0;gap:8px}
+#orderForm input[type="date"]{display:block;width:100%;max-width:100%;min-width:0;height:44px;padding:10px 8px;font-size:12px;box-sizing:border-box}
+#orderForm .form-grid input,#orderForm .form-grid select{min-width:0;max-width:100%;box-sizing:border-box}
+@media(max-width:380px){#orderForm .form-grid{grid-template-columns:minmax(0,1fr)}}
