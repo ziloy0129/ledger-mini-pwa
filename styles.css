@@ -25,3 +25,30 @@
   .tab span:last-child{font-size:10px}
   .tab-icon{font-size:17px}
 }
+
+
+/* Collapsible side navigation */
+.app-shell{max-width:900px;padding-bottom:24px;transition:margin-left .22s ease}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.menu-toggle{width:42px;height:42px;border:1px solid #e6eaf1;border-radius:14px;background:#fff;color:var(--navy);font-size:20px;display:grid;place-items:center;box-shadow:0 4px 12px #1018270b}
+.sidebar{position:fixed;z-index:31;top:0;bottom:0;left:0;width:270px;max-width:82vw;background:#fff;border-right:1px solid #e6eaf1;box-shadow:18px 0 48px #10182718;padding:calc(20px + env(safe-area-inset-top)) 14px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;transform:translateX(-110%);visibility:hidden;transition:transform .24s ease,visibility .24s ease}
+.sidebar.open{transform:translateX(0);visibility:visible}
+.sidebar-heading{display:flex;align-items:center;gap:11px;padding:4px 8px 24px;border-bottom:1px solid #edf0f5}
+.sidebar-logo{width:42px;height:42px;border-radius:14px;background:var(--navy);color:white;display:grid;place-items:center;font-size:12px;font-weight:850;letter-spacing:.5px}
+.sidebar-heading strong{display:block;font-size:14px;color:#172033}
+.sidebar-heading small{display:block;color:#98a1b2;font-size:11px;margin-top:4px}
+.sidebar-nav{display:grid;gap:5px;padding-top:18px}
+.side-link{display:flex;align-items:center;gap:13px;width:100%;border:0;background:transparent;color:#687386;text-align:left;padding:13px 14px;border-radius:13px;font-size:14px;font-weight:650}
+.side-link span{width:23px;text-align:center;font-size:20px;line-height:22px}
+.side-link.active{background:#edf2ff;color:var(--blue)}
+.sidebar-footer{margin-top:auto;padding:14px 10px;color:#9aa3b2;font-size:11px;border-top:1px solid #edf0f5}
+.sidebar-backdrop{position:fixed;z-index:30;inset:0;border:0;background:#10182766;backdrop-filter:blur(2px)}
+.sidebar-backdrop[hidden]{display:none}
+@media(min-width:900px){
+  .app-shell{max-width:900px}
+  .view{padding-left:32px;padding-right:32px}
+}
+@media(max-width:619px){
+  .app-shell{padding-bottom:20px}
+  .view{padding-bottom:28px}
+}

@@ -212,6 +212,33 @@
     }
     $("invoiceDialog").showModal();
   }
+  function exportOrderInvoice(orderId) {
+    const order = data.orders.find(o => o.id === orderId);
+    if (!order) return;
+    const lines = order.lines?.length ? order.lines : [{ name: order.title || "Service", unit: "unit", qty: 1, rate: Number(order.amount) || 0 }];
+    const total = sumLines(lines);
+    const number = `INV-${new Date().getFullYear()}-${String(Math.max(1, data.orders.indexOf(order) + 1)).padStart(4, "0")}`;
+    const customer = data.customers.find(c => c.id === order.customerId);
+    const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(number)}</title><style>
+      *{box-sizing:border-box}body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;max-width:820px;margin:40px auto;padding:0 24px;color:#1d2738}
+      .head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid #1d2738;padding-bottom:24px}
+      h1{font-size:32px;letter-spacing:2px;margin:0 0 8px}.muted{color:#718096;font-size:12px}.invno{text-align:right}.invno strong{display:block;font-size:18px;margin-top:8px}
+      .billto{margin:28px 0}.billto h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#718096}
+      table{width:100%;border-collapse:collapse;margin:24px 0}th{background:#f4f6fa;font-size:11px;text-transform:uppercase;color:#718096}th,td{padding:13px 10px;border-bottom:1px solid #e4e8ef;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}
+      .total{margin:24px 0 0 auto;max-width:280px}.total div{display:flex;justify-content:space-between;padding:7px 0}.grand{border-top:2px solid #1d2738;margin-top:8px;padding-top:14px!important;font-size:20px;font-weight:750}
+      .notes{margin-top:32px;padding-top:16px;border-top:1px solid #e4e8ef;color:#718096;white-space:pre-wrap}
+      @media print{body{margin:0 auto;padding:0 12px}@page{size:A4;margin:16mm}}
+    </style><div class="head"><div><h1>INVOICE</h1><div class="muted">Thank you for your business.</div></div><div class="invno"><div class="muted">INVOICE NUMBER</div><strong>${escapeHTML(number)}</strong><div style="margin-top:12px" class="muted">DATE</div><b>${escapeHTML(order.date || today())}</b>${order.dueDate ? `<div style="margin-top:10px" class="muted">DUE DATE</div><b>${escapeHTML(order.dueDate)}</b>` : ""}</div></div>
+      <div class="billto"><h3>Bill To</h3><strong>${escapeHTML(customer?.name || "Customer")}</strong>${customer?.email ? `<div>${escapeHTML(customer.email)}</div>` : ""}${customer?.phone ? `<div>${escapeHTML(customer.phone)}</div>` : ""}${customer?.notes ? `<div>${escapeHTML(customer.notes)}</div>` : ""}</div>
+      <table><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Unit Price (AUD)</th><th>Amount (AUD)</th></tr></thead><tbody>${lines.map(l => `<tr><td>${escapeHTML(l.name || projectName(l.projectId))}</td><td>${escapeHTML(l.qty ?? 1)}</td><td>${escapeHTML(l.unit || "unit")}</td><td>${money(l.rate || 0)}</td><td>${money(lineTotal(l))}</td></tr>`).join("")}</tbody></table>
+      <div class="total"><div class="grand"><span>Total AUD</span><span>${money(total)}</span></div></div>
+      ${order.notes ? `<div class="notes"><b>Notes</b><br>${escapeHTML(order.notes)}</div>` : ""}
+      <script>window.onload=()=>window.print()<\\/script></html>`;
+    const win = window.open("", "_blank");
+    if (!win) return showToast("请允许弹出窗口后重试");
+    win.document.write(html); win.document.close();
+  }
+
   function openInvoiceDetail(id) {
     const inv = data.invoices.find(x => x.id === id); if (!inv) return;
     detailContext = { type: "invoice", id };
@@ -233,7 +260,8 @@
   }
   function navigate(view) {
     document.querySelectorAll(".view").forEach(el => el.classList.toggle("active", el.id === `${view}View`));
-    document.querySelectorAll(".tab").forEach(el => el.classList.toggle("active", el.dataset.view === view));
+    document.querySelectorAll(".tab, .side-link").forEach(el => el.classList.toggle("active", el.dataset.view === view));
+    closeSidebar();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function openCustomerForm(id = "") {
@@ -290,9 +318,9 @@
     $("detailDeleteBtn").textContent = "删除";
     let convertBtn = $("convertToInvoiceBtn");
     if (!convertBtn) {
-      convertBtn = document.createElement("button"); convertBtn.type = "button"; convertBtn.id = "convertToInvoiceBtn"; convertBtn.className = "primary-button"; convertBtn.textContent = "生成发票";
+      convertBtn = document.createElement("button"); convertBtn.type = "button"; convertBtn.id = "convertToInvoiceBtn"; convertBtn.className = "primary-button"; convertBtn.textContent = "导出 Invoice";
       $("detailDialog").querySelector(".dialog-actions").insertBefore(convertBtn, $("detailEditBtn"));
-      convertBtn.addEventListener("click", () => { if (detailContext?.type === "order") { const id = detailContext.id; $("detailDialog").close(); openInvoiceForm(id); } });
+      convertBtn.addEventListener("click", () => { if (detailContext?.type === "order") { exportOrderInvoice(detailContext.id); } });
     }
     convertBtn.hidden = false;
     $("detailDialog").showModal();
@@ -392,6 +420,26 @@
     openInvoiceDetail(invoice.id);
   });
   $("invoiceSearch").addEventListener("input", renderInvoices);
+  function openSidebar() {
+    $("sidebar").classList.add("open");
+    $("sidebar").setAttribute("aria-hidden", "false");
+    $("sidebarBackdrop").hidden = false;
+    $("navToggle").setAttribute("aria-expanded", "true");
+    $("navToggle").setAttribute("aria-label", "关闭侧边导航");
+    $("navToggle").textContent = "×";
+  }
+  function closeSidebar() {
+    const sidebar = $("sidebar");
+    if (!sidebar) return;
+    sidebar.classList.remove("open");
+    sidebar.setAttribute("aria-hidden", "true");
+    $("sidebarBackdrop").hidden = true;
+    $("navToggle").setAttribute("aria-expanded", "false");
+    $("navToggle").setAttribute("aria-label", "打开侧边导航");
+    $("navToggle").textContent = "☰";
+  }
+  $("navToggle").addEventListener("click", () => $("sidebar").classList.contains("open") ? closeSidebar() : openSidebar());
+  $("sidebarBackdrop").addEventListener("click", closeSidebar);
   document.querySelectorAll("[data-view]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.view)));
   document.querySelectorAll("[data-nav]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.nav)));
   $("quickAdd").addEventListener("click", () => {

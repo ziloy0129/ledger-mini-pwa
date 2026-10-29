@@ -20,8 +20,24 @@
         <p class="eyebrow">PRIVATE WORKSPACE</p>
         <h1>Ledger<span>Mini</span></h1>
       </div>
-      <button class="avatar" id="quickAdd" aria-label="新增">＋</button>
+      <div class="topbar-actions">
+        <button class="menu-toggle" id="navToggle" aria-label="打开侧边导航" aria-expanded="false">☰</button>
+        <button class="avatar" id="quickAdd" aria-label="新增">＋</button>
+      </div>
     </header>
+
+    <button class="sidebar-backdrop" id="sidebarBackdrop" aria-label="关闭导航" hidden></button>
+    <aside class="sidebar" id="sidebar" aria-label="主导航" aria-hidden="true">
+      <div class="sidebar-heading"><span class="sidebar-logo">LM</span><div><strong>Ledger Mini</strong><small>业务管理</small></div></div>
+      <nav class="sidebar-nav">
+        <button class="side-link active" data-view="dashboard"><span>⌂</span>概览</button>
+        <button class="side-link" data-view="customers"><span>◎</span>客户</button>
+        <button class="side-link" data-view="orders"><span>▤</span>订单</button>
+        <button class="side-link" data-view="projects"><span>◇</span>项目与单价</button>
+        <button class="side-link" data-view="settings"><span>⚙</span>设置</button>
+      </nav>
+      <div class="sidebar-footer">本机存储 · 离线优先</div>
+    </aside>
 
     <main id="mainContent">
       <section class="view active" id="dashboardView">
@@ -107,15 +123,6 @@
         <div id="projectsList" class="list-stack"></div>
       </section>
 
-      <section class="view" id="invoicesView">
-        <div class="page-heading">
-          <div><p class="eyebrow">BILLING</p><h2>发票</h2></div>
-          <button class="primary-button compact" id="addInvoiceBtn">＋ 新发票</button>
-        </div>
-        <label class="search-box"><span>⌕</span><input id="invoiceSearch" type="search" placeholder="搜索发票编号、客户…" autocomplete="off"></label>
-        <div id="invoicesList" class="list-stack"></div>
-      </section>
-
       <section class="view" id="settingsView">
         <div class="page-heading">
           <div><p class="eyebrow">YOUR WORKSPACE</p><h2>设置</h2></div>
@@ -143,14 +150,7 @@
       </section>
     </main>
 
-    <nav class="tabbar" aria-label="主导航">
-      <button class="tab active" data-view="dashboard"><span class="tab-icon">⌂</span><span>概览</span></button>
-      <button class="tab" data-view="customers"><span class="tab-icon">◎</span><span>客户</span></button>
-      <button class="tab" data-view="orders"><span class="tab-icon">▤</span><span>订单</span></button>
-      <button class="tab" data-view="projects"><span class="tab-icon">◇</span><span>项目</span></button>
-      <button class="tab" data-view="invoices"><span class="tab-icon">▧</span><span>发票</span></button>
-      <button class="tab" data-view="settings"><span class="tab-icon">⚙</span><span>设置</span></button>
-    </nav>
+
   </div>
 
   <dialog id="customerDialog" class="sheet-dialog">
