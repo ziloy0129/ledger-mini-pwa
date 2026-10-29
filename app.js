@@ -193,25 +193,6 @@
     $("projectRate").value = p?.rate ?? ""; $("projectDescription").value = p?.description || "";
     $("projectDialog").showModal();
   }
-  function openInvoiceForm(orderId = "") {
-    const order = data.orders.find(o => o.id === orderId);
-    $("invoiceForm").reset(); $("invoiceId").value = "";
-    $("invoiceDialogTitle").textContent = "新发票";
-    $("invoiceCustomer").innerHTML = `<option value="">选择客户</option>` + data.customers.map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`).join("");
-    $("invoiceCustomer").value = order?.customerId || "";
-    $("invoiceOrder").innerHTML = `<option value="">不关联订单</option>` + data.orders.map(o => `<option value="${escapeHTML(o.id)}">${escapeHTML(o.title)} · ${money(o.amount)}</option>`).join("");
-    $("invoiceOrder").value = order?.id || "";
-    $("invoiceDate").value = today(); $("invoiceDueDate").value = "";
-    $("invoiceNotes").value = "";
-    renderLineEditors("invoiceLineItems", order?.lines?.length ? order.lines : []);
-    if (order && !order.lines?.length) {
-      $("invoiceLineItems").innerHTML = `<div class="line-item-row"><select class="line-project"><option value="">手动项目</option></select><div class="line-item-fields"><label>数量<input class="line-qty" type="number" min="0.01" step="0.01" value="1"></label><label>单价（AUD）<input class="line-rate" type="number" min="0" step="0.01" value="${Number(order.amount)||0}"></label></div><div class="line-item-bottom"><span class="line-total">${money(order.amount)}</span><button type="button" class="text-button remove-line">移除</button></div></div>`;
-      $("invoiceLineItems").querySelector(".remove-line").addEventListener("click", () => { $("invoiceLineItems").innerHTML = ""; updateLineEditorTotals("invoiceLineItems"); });
-      $("invoiceLineItems").querySelectorAll(".line-qty,.line-rate").forEach(el => el.addEventListener("input", () => updateLineEditorTotals("invoiceLineItems")));
-      updateLineEditorTotals("invoiceLineItems");
-    }
-    $("invoiceDialog").showModal();
-  }
   function exportOrderInvoice(orderId) {
     const order = data.orders.find(o => o.id === orderId);
     if (!order) return;
@@ -239,24 +220,12 @@
     win.document.write(html); win.document.close();
   }
 
-  function openInvoiceDetail(id) {
-    const inv = data.invoices.find(x => x.id === id); if (!inv) return;
-    detailContext = { type: "invoice", id };
-    $("detailEyebrow").textContent = "INVOICE";
-    $("detailTitle").textContent = invoiceNumber(inv);
-    if ($("convertToInvoiceBtn")) $("convertToInvoiceBtn").hidden = true;
-    const lineHtml = (inv.lines || []).map(l => `<div class="detail-line"><span>${escapeHTML(l.name)} · ${escapeHTML(l.qty)} ${escapeHTML(l.unit || "unit")} × ${money(l.rate)}</span><strong>${money(lineTotal(l))}</strong></div>`).join("");
-    $("detailBody").innerHTML = detailLine("客户", customerName(inv.customerId)) + detailLine("发票日期", dateLabel(inv.date)) + detailLine("到期日期", dateLabel(inv.dueDate)) + lineHtml + detailLine("合计", money(inv.total)) + detailLine("备注", inv.notes);
-    $("detailEditBtn").textContent = "打印 / 保存 PDF";
-    $("detailDeleteBtn").textContent = "删除发票";
-    $("detailDialog").showModal();
-  }
   function renderAll() {
     renderDashboard();
     renderCustomers();
     renderOrders();
     renderProjects();
-    renderInvoices();
+    if ($("invoicesList")) renderInvoices();
   }
   function navigate(view) {
     document.querySelectorAll(".view").forEach(el => el.classList.toggle("active", el.id === `${view}View`));
@@ -386,40 +355,6 @@
     const lines = readLineEditors("orderLineItems"); lines.push({ projectId: "", qty: 1, rate: 0 });
     renderLineEditors("orderLineItems", lines);
   });
-  $("addInvoiceBtn").addEventListener("click", () => openInvoiceForm());
-  $("addInvoiceLineBtn").addEventListener("click", () => {
-    const lines = readLineEditors("invoiceLineItems"); lines.push({ projectId: "", qty: 1, rate: 0 });
-    renderLineEditors("invoiceLineItems", lines);
-  });
-  $("invoiceOrder").addEventListener("change", () => {
-    const order = data.orders.find(o => o.id === $("invoiceOrder").value);
-    if (order) {
-      $("invoiceCustomer").value = order.customerId || "";
-      renderLineEditors("invoiceLineItems", order.lines?.length ? order.lines : []);
-      if (!order.lines?.length) {
-        $("invoiceLineItems").innerHTML = `<div class="line-item-row"><select class="line-project"><option value="">订单金额</option></select><div class="line-item-fields"><label>数量<input class="line-qty" type="number" min="0.01" step="0.01" value="1"></label><label>单价（AUD）<input class="line-rate" type="number" min="0" step="0.01" value="${Number(order.amount)||0}"></label></div><div class="line-item-bottom"><span class="line-total">${money(order.amount)}</span><button type="button" class="text-button remove-line">移除</button></div></div>`;
-        $("invoiceLineItems").querySelector(".remove-line").addEventListener("click", () => { $("invoiceLineItems").innerHTML = ""; updateLineEditorTotals("invoiceLineItems"); });
-        $("invoiceLineItems").querySelectorAll(".line-qty,.line-rate").forEach(el => el.addEventListener("input", () => updateLineEditorTotals("invoiceLineItems")));
-        updateLineEditorTotals("invoiceLineItems");
-      }
-    }
-  });
-  $("invoiceForm").addEventListener("submit", event => {
-    event.preventDefault();
-    const lines = readLineEditors("invoiceLineItems");
-    const customerId = $("invoiceCustomer").value;
-    if (!customerId) return showToast("请选择客户");
-    if (!lines.length) return showToast("请至少添加一个收费项目");
-    const total = Math.round(sumLines(lines) * 100) / 100;
-    const id = uid("inv");
-    const invoice = { id, number: `INV-${new Date().getFullYear()}-${String(data.invoices.length + 1).padStart(4, "0")}`,
-      customerId, orderId: $("invoiceOrder").value, date: $("invoiceDate").value || today(), dueDate: $("invoiceDueDate").value,
-      notes: $("invoiceNotes").value.trim(), lines, total, status: "草稿", createdAt: new Date().toISOString() };
-    data.invoices.push(invoice);
-    $("invoiceDialog").close(); saveData(); showToast("发票已保存");
-    openInvoiceDetail(invoice.id);
-  });
-  $("invoiceSearch").addEventListener("input", renderInvoices);
   function openSidebar() {
     $("sidebar").classList.add("open");
     $("sidebar").setAttribute("aria-hidden", "false");

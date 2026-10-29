@@ -61,3 +61,9 @@ GitHub Pages is static hosting. The repository's app code is public if the repos
 - 在订单详情点击“生成发票”，可从订单项目创建发票，也可在“发票”中独立创建。
 - 发票可选择客户、日期、到期日、项目和数量；点击发票详情中的“打印 / 保存 PDF”，可打印或另存为 PDF。
 - 发票默认不计算 GST；如需 GST，请确认适用税务规则后再自行注明或升级税务字段。
+
+
+## 稳定性整理
+- 移除了不再显示的独立发票页面的残留事件绑定，避免找不到页面元素时 JavaScript 初始化中断。
+- 订单详情中的“导出 Invoice”保留为唯一开票入口。
+- 侧边栏菜单点击逻辑与遮罩层保持独立，更新 Service Worker 缓存版本以便客户端加载新代码。
