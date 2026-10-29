@@ -127,6 +127,7 @@
         <label>数量<input class="line-qty" type="number" min="0.01" step="0.01" value="${escapeHTML(line.qty ?? 1)}"></label>
         <label>单价（AUD）<input class="line-rate" type="number" min="0" step="0.01" value="${escapeHTML(line.rate ?? "")}"></label>
       </div>
+      <label class="line-description-label">项目说明 / Description<textarea class="line-description" rows="2" maxlength="500" placeholder="可填写本次服务的具体说明（可选）">${escapeHTML(line.description || "")}</textarea></label>
       <label class="line-gst-label">GST<select class="line-gst"><option value="0" ${Number(line.gstRate || 0) === 0 ? "selected" : ""}>不加 GST（0%）</option><option value="10" ${Number(line.gstRate || 0) === 10 ? "selected" : ""}>加 GST 10%</option></select></label>
       <div class="line-item-bottom"><span class="line-total">${money(lineTotal(line))}</span><button type="button" class="text-button remove-line">移除</button></div>
     </div>`;
@@ -152,6 +153,7 @@
       const projectId = row.querySelector(".line-project").value;
       const project = data.projects.find(p => p.id === projectId);
       return { projectId, name: project?.name || row.querySelector(".line-project").selectedOptions[0]?.textContent || "项目", unit: project?.unit || "unit",
+        description: row.querySelector(".line-description")?.value.trim() || "",
         qty: Math.max(0, Number(row.querySelector(".line-qty").value) || 0), rate: Math.max(0, Number(row.querySelector(".line-rate").value) || 0), gstRate: Number(row.querySelector(".line-gst")?.value || 0) };
     }).filter(line => line.projectId && line.qty > 0);
   }
@@ -170,9 +172,14 @@
     const list = $("projectsList");
     if (!list) return;
     const rows = [...data.projects].sort((a,b) => a.name.localeCompare(b.name));
-    list.innerHTML = rows.length ? rows.map(p => `<div class="list-row">
-      <span class="list-avatar">◇</span><span class="list-main"><span class="list-title">${escapeHTML(p.name)}</span><span class="list-subtitle">${escapeHTML(p.description || "收费项目")} · ${money(p.rate)} / ${escapeHTML(p.unit || "unit")}</span></span>
-      <span class="list-trailing"><button class="text-button edit-project" data-id="${escapeHTML(p.id)}">编辑</button><button class="text-button delete-project" data-id="${escapeHTML(p.id)}">删除</button></span></div>`).join("") : emptyState("◇", "还没有收费项目", "先创建项目名称、计费单位和单价。", "＋ 新项目", "emptyAddProject");
+    list.innerHTML = rows.length ? rows.map(p => `<div class="list-row project-list-row">
+      <span class="list-avatar">◇</span>
+      <span class="list-main project-list-main">
+        <span class="list-title">${escapeHTML(p.name)}</span>
+        <span class="project-price">${money(p.rate)} / ${escapeHTML(p.unit || "unit")}</span>
+        ${p.description ? `<span class="project-description">${escapeHTML(p.description)}</span>` : `<span class="project-description muted">暂无说明</span>`}
+      </span>
+      <span class="list-trailing project-list-actions"><button class="text-button edit-project" data-id="${escapeHTML(p.id)}">编辑</button><button class="text-button delete-project" data-id="${escapeHTML(p.id)}">删除</button></span></div>`).join("") : emptyState("◇", "还没有收费项目", "先创建项目名称、计费单位和单价。", "＋ 新项目", "emptyAddProject");
     const empty = $("emptyAddProject"); if (empty) empty.addEventListener("click", () => openProjectForm());
     list.querySelectorAll(".edit-project").forEach(b => b.addEventListener("click", () => openProjectForm(b.dataset.id)));
     list.querySelectorAll(".delete-project").forEach(b => b.addEventListener("click", () => {

@@ -81,3 +81,8 @@ GitHub Pages is static hosting. The repository's app code is public if the repos
 - 必填字段星号显示在标签文字右侧。
 - 订单状态移除“处理中”。
 - 新增付款状态“待支付 / 已支付”。订单标记已支付后，导出 Invoice 会将 Total Paid 设为发票总额、Amount Owing 设为 $0.00；待支付时 Total Paid 为 $0.00，Amount Owing 为总额。
+
+
+## 项目列表与订单项目说明
+- 项目列表采用独立的价格/说明/操作布局，长说明会换行显示，编辑和删除按钮移到下方（手机端）避免重叠。
+- 创建或编辑订单时，每条收费项目可以填写可选的项目说明/Description；保存到订单后会在导出的 Invoice 的 Service Details 下显示。
