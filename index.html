@@ -133,6 +133,20 @@
           <span class="version-pill">v1.0</span>
         </article>
         <div class="settings-section">
+          <p class="eyebrow">INVOICE BUSINESS DETAILS</p>
+          <form id="businessSettingsForm" class="business-settings-form">
+            <label>企业 / 账户名称<input id="businessName" maxlength="150" placeholder="例如：Your Business Pty Ltd"></label>
+            <label>ABN<input id="businessAbn" maxlength="20" inputmode="numeric" placeholder="11 位 ABN"></label>
+            <div class="form-grid">
+              <label>联系人姓名<input id="businessContact" maxlength="100" placeholder="你的姓名"></label>
+              <label>联系电话<input id="businessPhone" type="tel" maxlength="40" placeholder="电话"></label>
+            </div>
+            <label>企业地址（可选）<textarea id="businessAddress" rows="2" maxlength="300" placeholder="发票显示的地址"></textarea></label>
+            <div class="dialog-actions"><button type="submit" class="primary-button">保存企业资料</button></div>
+            <p class="muted small">以上资料会显示在导出的 Invoice 中，并保存在当前设备。</p>
+          </form>
+        </div>
+        <div class="settings-section">
           <p class="eyebrow">DATA MANAGEMENT</p>
           <button class="settings-action" id="exportBtn"><span class="action-icon">↥</span><span><strong>导出数据备份</strong><small>下载客户和订单 JSON 文件</small></span><b>›</b></button>
           <button class="settings-action" id="importBtn"><span class="action-icon">↧</span><span><strong>导入数据备份</strong><small>从之前导出的 JSON 恢复</small></span><b>›</b></button>

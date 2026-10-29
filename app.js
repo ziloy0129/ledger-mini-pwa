@@ -26,10 +26,11 @@
         customers: Array.isArray(parsed.customers) ? parsed.customers : [],
         orders: Array.isArray(parsed.orders) ? parsed.orders : [],
         projects: Array.isArray(parsed.projects) ? parsed.projects : [],
-        invoices: Array.isArray(parsed.invoices) ? parsed.invoices : []
+        invoices: Array.isArray(parsed.invoices) ? parsed.invoices : [],
+        business: parsed.business && typeof parsed.business === "object" ? parsed.business : {}
       };
     } catch {
-      return { customers: [], orders: [], projects: [], invoices: [] };
+      return { customers: [], orders: [], projects: [], invoices: [], business: {} };
     }
   }
   function saveData() {
@@ -114,7 +115,9 @@
   }
   function projectName(id) { return data.projects.find(p => p.id === id)?.name || "已删除项目"; }
   function invoiceNumber(inv) { return inv.number || `INV-${String(inv.id || "").slice(-6).toUpperCase()}`; }
-  function lineTotal(line) { return (Number(line.qty) || 0) * (Number(line.rate) || 0); }
+  function lineSubtotal(line) { return (Number(line.qty) || 0) * (Number(line.rate) || 0); }
+  function lineGST(line) { return lineSubtotal(line) * (Number(line.gstRate) || 0) / 100; }
+  function lineTotal(line) { return lineSubtotal(line) + lineGST(line); }
   function sumLines(lines) { return (lines || []).reduce((s, line) => s + lineTotal(line), 0); }
   function lineEditorMarkup(line = {}) {
     const options = `<option value="">选择收费项目</option>` + data.projects.slice().sort((a,b) => a.name.localeCompare(b.name)).map(p => `<option value="${escapeHTML(p.id)}" ${p.id === line.projectId ? "selected" : ""}>${escapeHTML(p.name)} · ${money(p.rate)}/${escapeHTML(p.unit || "unit")}</option>`).join("");
@@ -124,6 +127,7 @@
         <label>数量<input class="line-qty" type="number" min="0.01" step="0.01" value="${escapeHTML(line.qty ?? 1)}"></label>
         <label>单价（AUD）<input class="line-rate" type="number" min="0" step="0.01" value="${escapeHTML(line.rate ?? "")}"></label>
       </div>
+      <label class="line-gst-label">GST<select class="line-gst"><option value="0" ${Number(line.gstRate || 0) === 0 ? "selected" : ""}>不加 GST（0%）</option><option value="10" ${Number(line.gstRate || 0) === 10 ? "selected" : ""}>加 GST 10%</option></select></label>
       <div class="line-item-bottom"><span class="line-total">${money(lineTotal(line))}</span><button type="button" class="text-button remove-line">移除</button></div>
     </div>`;
   }
@@ -138,6 +142,7 @@
         updateLineEditorTotals(containerId);
       });
       row.querySelectorAll(".line-qty,.line-rate").forEach(input => input.addEventListener("input", () => updateLineEditorTotals(containerId)));
+      row.querySelector(".line-gst")?.addEventListener("change", () => updateLineEditorTotals(containerId));
       row.querySelector(".remove-line").addEventListener("click", () => { row.remove(); updateLineEditorTotals(containerId); });
     });
     updateLineEditorTotals(containerId);
@@ -147,7 +152,7 @@
       const projectId = row.querySelector(".line-project").value;
       const project = data.projects.find(p => p.id === projectId);
       return { projectId, name: project?.name || row.querySelector(".line-project").selectedOptions[0]?.textContent || "项目", unit: project?.unit || "unit",
-        qty: Math.max(0, Number(row.querySelector(".line-qty").value) || 0), rate: Math.max(0, Number(row.querySelector(".line-rate").value) || 0) };
+        qty: Math.max(0, Number(row.querySelector(".line-qty").value) || 0), rate: Math.max(0, Number(row.querySelector(".line-rate").value) || 0), gstRate: Number(row.querySelector(".line-gst")?.value || 0) };
     }).filter(line => line.projectId && line.qty > 0);
   }
   function updateLineEditorTotals(containerId) {
@@ -196,28 +201,40 @@
   function exportOrderInvoice(orderId) {
     const order = data.orders.find(o => o.id === orderId);
     if (!order) return;
-    const lines = order.lines?.length ? order.lines : [{ name: order.title || "Service", unit: "unit", qty: 1, rate: Number(order.amount) || 0 }];
-    const total = sumLines(lines);
+    const lines = order.lines?.length ? order.lines : [{ name: order.title || "Service", unit: "unit", qty: 1, rate: Number(order.amount) || 0, gstRate: 0 }];
+    const subtotal = lines.reduce((s, line) => s + lineSubtotal(line), 0);
+    const gstTotal = lines.reduce((s, line) => s + lineGST(line), 0);
+    const total = subtotal + gstTotal;
     const number = `INV-${new Date().getFullYear()}-${String(Math.max(1, data.orders.indexOf(order) + 1)).padStart(4, "0")}`;
     const customer = data.customers.find(c => c.id === order.customerId);
-    const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(number)}</title><style>
-      *{box-sizing:border-box}body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;max-width:820px;margin:40px auto;padding:0 24px;color:#1d2738}
+    const business = data.business || {};
+    const invoiceWindow = window.open("", "_blank");
+    if (!invoiceWindow) return showToast("请允许弹出窗口后重试");
+    const lineRows = lines.map(l => `<tr><td>${escapeHTML(l.name || projectName(l.projectId))}</td><td>${escapeHTML(l.qty ?? 1)}</td><td>${escapeHTML(l.unit || "unit")}</td><td>${money(l.rate || 0)}</td><td>${Number(l.gstRate || 0) ? "10%" : "—"}</td><td>${money(lineSubtotal(l))}</td></tr>`).join("");
+    const doc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(number)}</title><style>
+      *{box-sizing:border-box}body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;max-width:900px;margin:0 auto;padding:22px;color:#1d2738;background:#f3f5f9}
+      .toolbar{display:flex;gap:10px;justify-content:space-between;position:sticky;top:0;background:#f3f5f9;padding:8px 0 18px}
+      button{border:0;border-radius:10px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer}.back{background:#e4e8ef;color:#1d2738}.pdf{background:#1d355d;color:white}
+      .paper{background:white;padding:42px;border-radius:14px;box-shadow:0 8px 30px #18243a12}
       .head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid #1d2738;padding-bottom:24px}
-      h1{font-size:32px;letter-spacing:2px;margin:0 0 8px}.muted{color:#718096;font-size:12px}.invno{text-align:right}.invno strong{display:block;font-size:18px;margin-top:8px}
-      .billto{margin:28px 0}.billto h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#718096}
-      table{width:100%;border-collapse:collapse;margin:24px 0}th{background:#f4f6fa;font-size:11px;text-transform:uppercase;color:#718096}th,td{padding:13px 10px;border-bottom:1px solid #e4e8ef;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}
-      .total{margin:24px 0 0 auto;max-width:280px}.total div{display:flex;justify-content:space-between;padding:7px 0}.grand{border-top:2px solid #1d2738;margin-top:8px;padding-top:14px!important;font-size:20px;font-weight:750}
+      h1{font-size:32px;letter-spacing:2px;margin:0 0 8px}.muted{color:#718096;font-size:12px}.business{line-height:1.65}.invno{text-align:right;min-width:150px}.invno strong{display:block;font-size:18px;margin-top:8px}
+      .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:28px 0}.parties h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#718096;margin:0 0 10px}.party{line-height:1.7}
+      table{width:100%;border-collapse:collapse;margin:24px 0}th{background:#f4f6fa;font-size:10px;text-transform:uppercase;color:#718096}th,td{padding:12px 8px;border-bottom:1px solid #e4e8ef;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}
+      .total{margin:24px 0 0 auto;max-width:320px}.total div{display:flex;justify-content:space-between;padding:7px 0}.grand{border-top:2px solid #1d2738;margin-top:8px;padding-top:14px!important;font-size:20px;font-weight:750}
       .notes{margin-top:32px;padding-top:16px;border-top:1px solid #e4e8ef;color:#718096;white-space:pre-wrap}
-      @media print{body{margin:0 auto;padding:0 12px}@page{size:A4;margin:16mm}}
-    </style><div class="head"><div><h1>INVOICE</h1><div class="muted">Thank you for your business.</div></div><div class="invno"><div class="muted">INVOICE NUMBER</div><strong>${escapeHTML(number)}</strong><div style="margin-top:12px" class="muted">DATE</div><b>${escapeHTML(order.date || today())}</b>${order.dueDate ? `<div style="margin-top:10px" class="muted">DUE DATE</div><b>${escapeHTML(order.dueDate)}</b>` : ""}</div></div>
-      <div class="billto"><h3>Bill To</h3><strong>${escapeHTML(customer?.name || "Customer")}</strong>${customer?.email ? `<div>${escapeHTML(customer.email)}</div>` : ""}${customer?.phone ? `<div>${escapeHTML(customer.phone)}</div>` : ""}${customer?.notes ? `<div>${escapeHTML(customer.notes)}</div>` : ""}</div>
-      <table><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Unit Price (AUD)</th><th>Amount (AUD)</th></tr></thead><tbody>${lines.map(l => `<tr><td>${escapeHTML(l.name || projectName(l.projectId))}</td><td>${escapeHTML(l.qty ?? 1)}</td><td>${escapeHTML(l.unit || "unit")}</td><td>${money(l.rate || 0)}</td><td>${money(lineTotal(l))}</td></tr>`).join("")}</tbody></table>
-      <div class="total"><div class="grand"><span>Total AUD</span><span>${money(total)}</span></div></div>
-      ${order.notes ? `<div class="notes"><b>Notes</b><br>${escapeHTML(order.notes)}</div>` : ""}
-      <script>window.onload=()=>window.print()<\\/script></html>`;
-    const win = window.open("", "_blank");
-    if (!win) return showToast("请允许弹出窗口后重试");
-    win.document.write(html); win.document.close();
+      @media(max-width:600px){body{padding:12px}.paper{padding:20px}.head{gap:12px}.parties{grid-template-columns:1fr}.invno{min-width:110px}table{font-size:11px}th,td{padding:8px 4px}}
+      @media print{body{background:white;padding:0;max-width:none}.toolbar{display:none}.paper{box-shadow:none;border-radius:0;padding:0}.paper{break-inside:avoid}@page{size:A4;margin:14mm}}
+    </style></head><body>
+      <div class="toolbar"><button class="back" onclick="if(history.length>1){history.back()}else{window.close()}">← 返回订单</button><button class="pdf" onclick="window.print()">↓ 下载 / 保存 PDF</button></div>
+      <article class="paper">
+      <div class="head"><div class="business"><h1>INVOICE</h1><div class="muted">Thank you for your business.</div><div style="margin-top:16px"><strong>${escapeHTML(business.name || "")}</strong></div>${business.abn ? `<div>ABN: ${escapeHTML(business.abn)}</div>` : ""}${business.contact ? `<div>${escapeHTML(business.contact)}</div>` : ""}${business.phone ? `<div>${escapeHTML(business.phone)}</div>` : ""}${business.address ? `<div>${escapeHTML(business.address).replace(/\n/g,"<br>")}</div>` : ""}</div>
+      <div class="invno"><div class="muted">INVOICE NUMBER</div><strong>${escapeHTML(number)}</strong><div style="margin-top:12px" class="muted">INVOICE DATE</div><b>${escapeHTML(order.date || today())}</b>${order.dueDate ? `<div style="margin-top:10px" class="muted">DUE DATE</div><b>${escapeHTML(order.dueDate)}</b>` : ""}</div></div>
+      <div class="parties"><div class="party"><h3>Bill To</h3><strong>${escapeHTML(customer?.name || "Customer")}</strong>${customer?.contact ? `<div>${escapeHTML(customer.contact)}</div>` : ""}${customer?.email ? `<div>${escapeHTML(customer.email)}</div>` : ""}${customer?.phone ? `<div>${escapeHTML(customer.phone)}</div>` : ""}</div><div class="party"><h3>Order</h3><strong>${escapeHTML(order.title)}</strong>${order.notes ? `<div>${escapeHTML(order.notes)}</div>` : ""}</div></div>
+      <table><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Unit price</th><th>GST</th><th>Subtotal</th></tr></thead><tbody>${lineRows}</tbody></table>
+      <div class="total"><div><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div><span>GST</span><strong>${money(gstTotal)}</strong></div><div class="grand"><span>Total AUD</span><span>${money(total)}</span></div></div>
+      <div class="notes">Please contact us if you have any questions regarding this invoice.</div>
+      </article></body></html>`;
+    invoiceWindow.document.open(); invoiceWindow.document.write(doc); invoiceWindow.document.close();
   }
 
   function renderAll() {
@@ -340,6 +357,28 @@
     saveData();
     showToast(existing ? "订单已更新" : "订单已保存");
   });
+  function renderBusinessSettings() {
+    const b = data.business || {};
+    $("businessName").value = b.name || "";
+    $("businessAbn").value = b.abn || "";
+    $("businessContact").value = b.contact || "";
+    $("businessPhone").value = b.phone || "";
+    $("businessAddress").value = b.address || "";
+  }
+  renderBusinessSettings();
+  $("businessSettingsForm").addEventListener("submit", event => {
+    event.preventDefault();
+    data.business = {
+      name: $("businessName").value.trim(),
+      abn: $("businessAbn").value.trim(),
+      contact: $("businessContact").value.trim(),
+      phone: $("businessPhone").value.trim(),
+      address: $("businessAddress").value.trim()
+    };
+    saveData();
+    showToast("企业资料已保存");
+  });
+
   $("projectForm").addEventListener("submit", event => {
     event.preventDefault();
     const id = $("projectId").value, existing = data.projects.find(p => p.id === id);
@@ -455,7 +494,8 @@
         customers: parsed.customers.filter(x => x && typeof x.id === "string" && typeof x.name === "string"),
         orders: parsed.orders.filter(x => x && typeof x.id === "string" && typeof x.title === "string"),
         projects: Array.isArray(parsed.projects) ? parsed.projects : [],
-        invoices: Array.isArray(parsed.invoices) ? parsed.invoices : []
+        invoices: Array.isArray(parsed.invoices) ? parsed.invoices : [],
+        business: parsed.business && typeof parsed.business === "object" ? parsed.business : {}
       };
       saveData();
       showToast("数据恢复成功");
