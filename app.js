@@ -205,6 +205,8 @@
     const subtotal = lines.reduce((s, line) => s + lineSubtotal(line), 0);
     const gstTotal = lines.reduce((s, line) => s + lineGST(line), 0);
     const total = subtotal + gstTotal;
+    const totalPaid = order.paymentStatus === "paid" ? total : 0;
+    const amountOwing = Math.max(0, total - totalPaid);
     const number = `INV-${new Date().getFullYear()}-${String(Math.max(1, data.orders.indexOf(order) + 1)).padStart(4, "0")}`;
     const customer = data.customers.find(c => c.id === order.customerId);
     const b = data.business || {};
@@ -248,9 +250,9 @@
           <div class="meta-right"><div><b>Invoice Number:</b><span>${escapeHTML(number)}</span></div><div><b>Invoice Date:</b><span>${escapeHTML(order.date || today())}</span></div>${order.dueDate ? `<div><b>Due Date:</b><span>${escapeHTML(order.dueDate)}</span></div>` : ""}<div><b>Order:</b><span>${escapeHTML(order.title)}</span></div></div></div>
         <table><thead><tr><th>Service Details</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Rate</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
         <div class="comments"><b>Comments</b>${order.notes ? `<div>${escapeHTML(order.notes)}</div>` : ""}</div>
-        <div class="summary"><table><tbody><tr><td>Invoice Subtotal</td><td>${money(subtotal)}</td></tr><tr><td>GST Included</td><td>${money(gstTotal)}</td></tr><tr><td>Total Paid</td><td>$0.00</td></tr><tr><td>Total Credited</td><td>$0.00</td></tr><tr class="due"><td>Amount Owing</td><td>${money(total)}</td></tr></tbody></table></div>
+        <div class="summary"><table><tbody><tr><td>Invoice Subtotal</td><td>${money(subtotal)}</td></tr><tr><td>GST Included</td><td>${money(gstTotal)}</td></tr><tr><td>Total Paid</td><td>${money(totalPaid)}</td></tr><tr><td>Total Credited</td><td>$0.00</td></tr><tr class="due"><td>Amount Owing</td><td>${money(amountOwing)}</td></tr></tbody></table></div>
         <section class="section"><h3>Payment Options</h3><div class="payment"><div><strong>Electronic Funds Transfer (EFT)</strong><br>${b.bsb ? `BSB: ${escapeHTML(b.bsb)}<br>` : ""}${b.account ? `Account Number: ${escapeHTML(b.account)}<br>` : ""}${b.accountName ? `Account Name: ${escapeHTML(b.accountName)}<br>` : ""}${b.remittanceEmail ? `Please email remittance advice to ${escapeHTML(b.remittanceEmail)}<br>` : ""}<span class="small">Please use the invoice number as your payment reference. Please ensure the payment reference is clearly stated on the bank transfer.</span></div>
-          <div><b>Amount Owing:</b> ${money(total)}<br>${order.dueDate ? `<b>Due Date:</b> ${escapeHTML(order.dueDate)}<br>` : ""}<b>Payment Reference:</b> ${escapeHTML(number)}</div></div></section>
+          <div><b>Amount Owing:</b> ${money(amountOwing)}<br><b>Total Paid:</b> ${money(totalPaid)}<br>${order.dueDate ? `<b>Due Date:</b> ${escapeHTML(order.dueDate)}<br>` : ""}<b>Payment Reference:</b> ${escapeHTML(number)}</div></div></section>
         ${b.contact ? `<section class="section"><h3>Contact</h3>${escapeHTML(b.contact)}${b.phone ? ` · ${escapeHTML(b.phone)}` : ""}</section>` : ""}
         <div class="thanks">Thank you for your business.</div>
       </main>
@@ -319,7 +321,8 @@
     $("orderCustomer").innerHTML = `<option value="">选择客户（可选）</option>` + [...data.customers].sort((a,b) => a.name.localeCompare(b.name)).map(c => `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`).join("");
     $("orderCustomer").value = o?.customerId || "";
     $("orderAmount").value = o?.amount ?? "";
-    $("orderStatus").value = o?.status || "待处理";
+    $("orderStatus").value = ["待处理", "已完成", "已取消"].includes(o?.status) ? o.status : "待处理";
+    $("orderPaymentStatus").value = o?.paymentStatus || "unpaid";
     $("orderDate").value = o?.date || today();
     $("orderDueDate").value = o?.dueDate || "";
     $("orderNotes").value = o?.notes || "";
@@ -347,7 +350,7 @@
     $("detailEyebrow").textContent = "ORDER DETAILS";
     $("detailTitle").textContent = o.title;
     const lineHtml = (o.lines || []).map(l => `<div class="detail-line"><span>${escapeHTML(l.name)} · ${escapeHTML(l.qty)} ${escapeHTML(l.unit || "unit")} × ${money(l.rate)}</span><strong>${money(lineTotal(l))}</strong></div>`).join("");
-    $("detailBody").innerHTML = detailLine("客户", customerName(o.customerId)) + lineHtml + detailLine("金额", money(o.amount)) + detailLine("状态", o.status) + detailLine("订单日期", dateLabel(o.date)) + detailLine("交付日期", dateLabel(o.dueDate)) + detailLine("备注", o.notes);
+    $("detailBody").innerHTML = detailLine("客户", customerName(o.customerId)) + lineHtml + detailLine("金额", money(o.amount)) + detailLine("订单状态", o.status) + detailLine("付款状态", o.paymentStatus === "paid" ? "已支付" : "待支付") + detailLine("订单日期", dateLabel(o.date)) + detailLine("交付日期", dateLabel(o.dueDate)) + detailLine("备注", o.notes);
     $("detailEditBtn").textContent = "编辑订单";
     $("detailDeleteBtn").textContent = "删除";
     let convertBtn = $("convertToInvoiceBtn");
@@ -391,6 +394,7 @@
       amount: Math.round((Number($("orderAmount").value) || 0) * 100) / 100,
       lines: readLineEditors("orderLineItems"),
       status: $("orderStatus").value,
+      paymentStatus: $("orderPaymentStatus").value || "unpaid",
       date: $("orderDate").value || today(),
       dueDate: $("orderDueDate").value,
       notes: $("orderNotes").value.trim(),
@@ -472,12 +476,7 @@
   $("sidebarBackdrop").addEventListener("click", closeSidebar);
   document.querySelectorAll("[data-view]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.view)));
   document.querySelectorAll("[data-nav]").forEach(btn => btn.addEventListener("click", () => navigate(btn.dataset.nav)));
-  $("quickAdd").addEventListener("click", () => {
-    const choice = window.prompt("输入 1 新增客户，或输入 2 新增订单", "2");
-    if (choice === "1") openCustomerForm();
-    else if (choice === "2") openOrderForm();
-  });
-  $("addCustomerBtn").addEventListener("click", () => openCustomerForm());
+$("addCustomerBtn").addEventListener("click", () => openCustomerForm());
   $("addOrderBtn").addEventListener("click", () => openOrderForm());
   $("customerSearch").addEventListener("input", renderCustomers);
   $("orderSearch").addEventListener("input", renderOrders);

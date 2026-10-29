@@ -22,7 +22,6 @@
       </div>
       <div class="topbar-actions">
         <button class="menu-toggle" id="navToggle" aria-label="打开侧边导航" aria-expanded="false">☰</button>
-        <button class="avatar" id="quickAdd" aria-label="新增">＋</button>
       </div>
     </header>
 
@@ -106,7 +105,6 @@
         <div class="filter-row" id="orderFilters">
           <button class="filter-chip selected" data-filter="all">全部</button>
           <button class="filter-chip" data-filter="待处理">待处理</button>
-          <button class="filter-chip" data-filter="处理中">处理中</button>
           <button class="filter-chip" data-filter="已完成">已完成</button>
           <button class="filter-chip" data-filter="已取消">已取消</button>
         </div>
@@ -178,7 +176,7 @@
       <div class="sheet-handle"></div>
       <div class="dialog-heading"><div><p class="eyebrow">CUSTOMER DETAILS</p><h2 id="customerDialogTitle">新客户</h2></div><button type="button" class="close-button" data-close="customerDialog">×</button></div>
       <input type="hidden" id="customerId">
-      <label>客户名称 <em>*</em><input id="customerName" required maxlength="100" placeholder="例如：Acme Pty Ltd"></label>
+      <label><span>客户名称</span><em>*</em><input id="customerName" required maxlength="100" placeholder="例如：Acme Pty Ltd"></label>
       <label>联系人<input id="customerContact" maxlength="100" placeholder="联系人姓名"></label>
       <div class="form-grid">
         <label>电话<input id="customerPhone" type="tel" maxlength="40" placeholder="电话"></label>
@@ -194,11 +192,12 @@
       <div class="sheet-handle"></div>
       <div class="dialog-heading"><div><p class="eyebrow">ORDER DETAILS</p><h2 id="orderDialogTitle">新订单</h2></div><button type="button" class="close-button" data-close="orderDialog">×</button></div>
       <input type="hidden" id="orderId">
-      <label>订单名称 <em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如：Storage & handling"></label>
+      <label><span>订单名称</span><em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如：Storage & handling"></label>
       <label>客户 <select id="orderCustomer"><option value="">选择客户（可选）</option></select></label>
       <div class="form-grid">
-        <label>订单金额（AUD）<input id="orderAmount" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
-        <label>状态<select id="orderStatus"><option>待处理</option><option>处理中</option><option>已完成</option><option>已取消</option></select></label>
+        <label><span>订单金额（AUD）</span><em>*</em><input id="orderAmount" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+        <label>订单状态<select id="orderStatus"><option>待处理</option><option>已完成</option><option>已取消</option></select></label>
+        <label>付款状态<select id="orderPaymentStatus"><option value="unpaid">待支付</option><option value="paid">已支付</option></select></label>
       </div>
       <div class="line-items-heading"><strong>收费项目</strong><button type="button" class="text-button" id="addOrderLineBtn">＋ 添加项目</button></div>
       <div id="orderLineItems" class="line-items"></div>
@@ -217,10 +216,10 @@
       <div class="sheet-handle"></div>
       <div class="dialog-heading"><div><p class="eyebrow">BILLABLE SERVICE</p><h2 id="projectDialogTitle">新项目</h2></div><button type="button" class="close-button" data-close="projectDialog">×</button></div>
       <input type="hidden" id="projectId">
-      <label>项目名称 <em>*</em><input id="projectName" required maxlength="120" placeholder="例如：Storage fee"></label>
+      <label><span>项目名称</span><em>*</em><input id="projectName" required maxlength="120" placeholder="例如：Storage fee"></label>
       <div class="form-grid">
         <label>单位<input id="projectUnit" maxlength="30" placeholder="例如：hour / pallet / trip" value="unit"></label>
-        <label>单价（AUD）<em>*</em><input id="projectRate" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+        <label><span>单价（AUD）</span><em>*</em><input id="projectRate" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
       </div>
       <label>说明<input id="projectDescription" maxlength="300" placeholder="可选"></label>
       <div class="dialog-actions"><button type="button" class="secondary-button" data-close="projectDialog">取消</button><button type="submit" class="primary-button">保存项目</button></div>

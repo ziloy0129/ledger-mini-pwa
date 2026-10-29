@@ -74,3 +74,10 @@ GitHub Pages is static hosting. The repository's app code is public if the repos
 - 设置页面新增 BSB、银行账号、账户名称和收款通知邮箱字段。
 - Invoice 页面提供返回订单按钮及打印/保存 PDF 按钮。
 - PDF 下载由浏览器打印功能完成；在打印对话框选择 Save as PDF。
+
+
+## 订单体验改进
+- 移除顶部 Quick Add 按钮。
+- 必填字段星号显示在标签文字右侧。
+- 订单状态移除“处理中”。
+- 新增付款状态“待支付 / 已支付”。订单标记已支付后，导出 Invoice 会将 Total Paid 设为发票总额、Amount Owing 设为 $0.00；待支付时 Total Paid 为 $0.00，Amount Owing 为总额。

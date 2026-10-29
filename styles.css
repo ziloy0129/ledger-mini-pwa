@@ -74,3 +74,11 @@
 /* Invoice business/payment profile fields */
 .business-settings-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:420px){.business-settings-form .form-grid{grid-template-columns:1fr}}
+
+/* Required field marker aligned to the right of the field label */
+.dialog-form label:has(> span + em){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:8px;align-items:center}
+.dialog-form label:has(> span + em)>span{grid-column:1;grid-row:1}
+.dialog-form label:has(> span + em)>em{grid-column:2;grid-row:1;justify-self:end}
+.dialog-form label:has(> span + em)>input,
+.dialog-form label:has(> span + em)>select,
+.dialog-form label:has(> span + em)>textarea{grid-column:1/-1;grid-row:2}
