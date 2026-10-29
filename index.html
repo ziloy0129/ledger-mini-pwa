@@ -142,6 +142,12 @@
               <label>联系电话<input id="businessPhone" type="tel" maxlength="40" placeholder="电话"></label>
             </div>
             <label>企业地址（可选）<textarea id="businessAddress" rows="2" maxlength="300" placeholder="发票显示的地址"></textarea></label>
+            <div class="form-grid">
+              <label>银行 BSB<input id="businessBsb" maxlength="12" placeholder="例如：013264"></label>
+              <label>银行账号<input id="businessAccount" maxlength="30" placeholder="银行账号"></label>
+            </div>
+            <label>银行账户名称<input id="businessAccountName" maxlength="150" placeholder="账户名称"></label>
+            <label>收款通知邮箱<input id="businessRemittanceEmail" type="email" maxlength="150" placeholder="accounts@example.com"></label>
             <div class="dialog-actions"><button type="submit" class="primary-button">保存企业资料</button></div>
             <p class="muted small">以上资料会显示在导出的 Invoice 中，并保存在当前设备。</p>
           </form>

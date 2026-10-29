@@ -207,33 +207,53 @@
     const total = subtotal + gstTotal;
     const number = `INV-${new Date().getFullYear()}-${String(Math.max(1, data.orders.indexOf(order) + 1)).padStart(4, "0")}`;
     const customer = data.customers.find(c => c.id === order.customerId);
-    const business = data.business || {};
+    const b = data.business || {};
     const invoiceWindow = window.open("", "_blank");
     if (!invoiceWindow) return showToast("请允许弹出窗口后重试");
-    const lineRows = lines.map(l => `<tr><td>${escapeHTML(l.name || projectName(l.projectId))}</td><td>${escapeHTML(l.qty ?? 1)}</td><td>${escapeHTML(l.unit || "unit")}</td><td>${money(l.rate || 0)}</td><td>${Number(l.gstRate || 0) ? "10%" : "—"}</td><td>${money(lineSubtotal(l))}</td></tr>`).join("");
-    const doc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(number)}</title><style>
-      *{box-sizing:border-box}body{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;max-width:900px;margin:0 auto;padding:22px;color:#1d2738;background:#f3f5f9}
-      .toolbar{display:flex;gap:10px;justify-content:space-between;position:sticky;top:0;background:#f3f5f9;padding:8px 0 18px}
-      button{border:0;border-radius:10px;padding:12px 16px;font-weight:700;font-size:14px;cursor:pointer}.back{background:#e4e8ef;color:#1d2738}.pdf{background:#1d355d;color:white}
-      .paper{background:white;padding:42px;border-radius:14px;box-shadow:0 8px 30px #18243a12}
-      .head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;border-bottom:2px solid #1d2738;padding-bottom:24px}
-      h1{font-size:32px;letter-spacing:2px;margin:0 0 8px}.muted{color:#718096;font-size:12px}.business{line-height:1.65}.invno{text-align:right;min-width:150px}.invno strong{display:block;font-size:18px;margin-top:8px}
-      .parties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:28px 0}.parties h3{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#718096;margin:0 0 10px}.party{line-height:1.7}
-      table{width:100%;border-collapse:collapse;margin:24px 0}th{background:#f4f6fa;font-size:10px;text-transform:uppercase;color:#718096}th,td{padding:12px 8px;border-bottom:1px solid #e4e8ef;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}
-      .total{margin:24px 0 0 auto;max-width:320px}.total div{display:flex;justify-content:space-between;padding:7px 0}.grand{border-top:2px solid #1d2738;margin-top:8px;padding-top:14px!important;font-size:20px;font-weight:750}
-      .notes{margin-top:32px;padding-top:16px;border-top:1px solid #e4e8ef;color:#718096;white-space:pre-wrap}
-      @media(max-width:600px){body{padding:12px}.paper{padding:20px}.head{gap:12px}.parties{grid-template-columns:1fr}.invno{min-width:110px}table{font-size:11px}th,td{padding:8px 4px}}
-      @media print{body{background:white;padding:0;max-width:none}.toolbar{display:none}.paper{box-shadow:none;border-radius:0;padding:0}.paper{break-inside:avoid}@page{size:A4;margin:14mm}}
+    const rows = lines.map(l => `<tr>
+      <td class="description"><strong>${escapeHTML(l.name || projectName(l.projectId))}</strong>${l.description ? `<div class="sub">${escapeHTML(l.description)}</div>` : ""}</td>
+      <td class="num">${escapeHTML(l.qty ?? 1)}</td><td class="num">${escapeHTML(l.unit || "unit")}</td>
+      <td class="num">${money(l.rate || 0)}</td><td class="num">${Number(l.gstRate || 0) ? money(lineGST(l)) : "$0.00"}</td><td class="num">${money(lineTotal(l))}</td>
+    </tr>`).join("");
+    const doc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(number)}</title>
+    <style>
+      *{box-sizing:border-box}body{margin:0;background:#edf0f4;color:#171717;font:12px Arial,Helvetica,sans-serif}
+      .toolbar{max-width:900px;margin:0 auto;padding:14px 20px;display:flex;justify-content:space-between;gap:10px}
+      button{border:0;border-radius:8px;padding:11px 16px;font-weight:700;font-size:13px;cursor:pointer}.back{background:#e0e5ec;color:#172033}.pdf{background:#163e69;color:white}
+      .paper{background:#fff;max-width:900px;margin:0 auto 28px;padding:42px 48px;box-shadow:0 2px 16px #00000012}
+      .brandrow{display:flex;justify-content:space-between;gap:28px;align-items:flex-start;padding-bottom:26px}
+      .brandmark{font-size:25px;font-weight:800;letter-spacing:-.8px;max-width:48%;overflow-wrap:anywhere}.brandmark span{color:#24649b}
+      .supplier{text-align:right;line-height:1.65;max-width:52%;overflow-wrap:anywhere}.supplier strong{font-size:14px}
+      .title{text-align:center;font-size:21px;font-weight:700;margin:0 0 10px}
+      .rule{border:0;border-top:1px solid #222;margin:0 0 16px}
+      .meta{display:grid;grid-template-columns:1.2fr 1fr;gap:26px;margin-bottom:28px;line-height:1.7}
+      .meta-title{font-weight:bold;margin-bottom:8px}.meta-right div{display:flex;gap:5px}.meta-right b{white-space:nowrap}
+      table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px}
+      th{font-weight:700;text-align:left;border-bottom:1px solid #222;border-top:1px solid #222;padding:8px 6px;background:#f8f8f8}
+      td{padding:10px 6px;border-bottom:1px solid #555;vertical-align:middle}
+      th:first-child{width:48%}th:nth-child(2){width:8%}th:nth-child(3){width:9%}th:nth-child(4){width:12%}th:nth-child(5){width:9%}th:nth-child(6){width:14%}
+      .num{text-align:right;white-space:nowrap}.description{line-height:1.45;overflow-wrap:anywhere}.sub{margin-top:3px;color:#555}
+      .summary{display:flex;justify-content:flex-end;margin:18px 0 24px}.summary table{width:270px;table-layout:auto;font-size:12px}.summary td{border:0;padding:4px 0}.summary td:last-child{text-align:right;white-space:nowrap}.summary .due td{border-top:1px solid #222;padding-top:9px;font-weight:bold;font-size:13px}
+      .section{margin-top:22px}.section h3{font-size:12px;margin:0 0 10px;border-bottom:1px solid #222;padding-bottom:5px}.payment{display:grid;grid-template-columns:1.2fr 1fr;gap:22px;line-height:1.65}.small{font-size:11px;color:#333}
+      .comments{min-height:18px;margin-top:18px}.thanks{margin-top:22px;color:#555;font-size:11px}
+      @media(max-width:650px){.paper{padding:22px 16px;margin:0}.brandrow{gap:12px}.brandmark{font-size:20px}.supplier{font-size:10px}.meta{gap:12px;font-size:10px}.meta-right b{white-space:normal}table{font-size:9px}th,td{padding:7px 3px}th:first-child{width:39%}th:nth-child(2){width:8%}th:nth-child(3){width:9%}th:nth-child(4){width:14%}th:nth-child(5){width:10%}th:nth-child(6){width:20%}.num{white-space:normal}.payment{grid-template-columns:1fr}.toolbar{padding:10px}}
+      @media print{body{background:#fff;font-size:11px}.toolbar{display:none}.paper{max-width:none;margin:0;padding:0;box-shadow:none}@page{size:A4;margin:14mm}tr{break-inside:avoid}.section{break-inside:avoid}}
     </style></head><body>
-      <div class="toolbar"><button class="back" onclick="if(history.length>1){history.back()}else{window.close()}">← 返回订单</button><button class="pdf" onclick="window.print()">↓ 下载 / 保存 PDF</button></div>
-      <article class="paper">
-      <div class="head"><div class="business"><h1>INVOICE</h1><div class="muted">Thank you for your business.</div><div style="margin-top:16px"><strong>${escapeHTML(business.name || "")}</strong></div>${business.abn ? `<div>ABN: ${escapeHTML(business.abn)}</div>` : ""}${business.contact ? `<div>${escapeHTML(business.contact)}</div>` : ""}${business.phone ? `<div>${escapeHTML(business.phone)}</div>` : ""}${business.address ? `<div>${escapeHTML(business.address).replace(/\n/g,"<br>")}</div>` : ""}</div>
-      <div class="invno"><div class="muted">INVOICE NUMBER</div><strong>${escapeHTML(number)}</strong><div style="margin-top:12px" class="muted">INVOICE DATE</div><b>${escapeHTML(order.date || today())}</b>${order.dueDate ? `<div style="margin-top:10px" class="muted">DUE DATE</div><b>${escapeHTML(order.dueDate)}</b>` : ""}</div></div>
-      <div class="parties"><div class="party"><h3>Bill To</h3><strong>${escapeHTML(customer?.name || "Customer")}</strong>${customer?.contact ? `<div>${escapeHTML(customer.contact)}</div>` : ""}${customer?.email ? `<div>${escapeHTML(customer.email)}</div>` : ""}${customer?.phone ? `<div>${escapeHTML(customer.phone)}</div>` : ""}</div><div class="party"><h3>Order</h3><strong>${escapeHTML(order.title)}</strong>${order.notes ? `<div>${escapeHTML(order.notes)}</div>` : ""}</div></div>
-      <table><thead><tr><th>Description</th><th>Qty</th><th>Unit</th><th>Unit price</th><th>GST</th><th>Subtotal</th></tr></thead><tbody>${lineRows}</tbody></table>
-      <div class="total"><div><span>Subtotal</span><strong>${money(subtotal)}</strong></div><div><span>GST</span><strong>${money(gstTotal)}</strong></div><div class="grand"><span>Total AUD</span><span>${money(total)}</span></div></div>
-      <div class="notes">Please contact us if you have any questions regarding this invoice.</div>
-      </article></body></html>`;
+      <div class="toolbar"><button class="back" onclick="if(history.length>1)history.back();else window.close()">← 返回订单</button><button class="pdf" onclick="window.print()">↓ 下载 / 保存 PDF</button></div>
+      <main class="paper">
+        <div class="brandrow"><div class="brandmark">${escapeHTML(b.name || "YOUR BUSINESS")}<br><span>INVOICE</span></div>
+          <div class="supplier"><strong>${escapeHTML(b.name || "")}</strong>${b.abn ? `<br><b>ABN:</b> ${escapeHTML(b.abn)}` : ""}${b.address ? `<br>${escapeHTML(b.address).replace(/\n/g,"<br>")}` : ""}${b.phone ? `<br><b>Ph:</b> ${escapeHTML(b.phone)}` : ""}${b.remittanceEmail ? `<br>${escapeHTML(b.remittanceEmail)}` : ""}</div></div>
+        <h1 class="title">Tax Invoice</h1><hr class="rule">
+        <div class="meta"><div><div class="meta-title">Private and Confidential</div><strong>${escapeHTML(customer?.name || "Customer")}</strong>${customer?.contact ? `<br>${escapeHTML(customer.contact)}` : ""}${customer?.email ? `<br>${escapeHTML(customer.email)}` : ""}${customer?.phone ? `<br>${escapeHTML(customer.phone)}` : ""}</div>
+          <div class="meta-right"><div><b>Invoice Number:</b><span>${escapeHTML(number)}</span></div><div><b>Invoice Date:</b><span>${escapeHTML(order.date || today())}</span></div>${order.dueDate ? `<div><b>Due Date:</b><span>${escapeHTML(order.dueDate)}</span></div>` : ""}<div><b>Order:</b><span>${escapeHTML(order.title)}</span></div></div></div>
+        <table><thead><tr><th>Service Details</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Rate</th><th class="num">GST</th><th class="num">Total</th></tr></thead><tbody>${rows}</tbody></table>
+        <div class="comments"><b>Comments</b>${order.notes ? `<div>${escapeHTML(order.notes)}</div>` : ""}</div>
+        <div class="summary"><table><tbody><tr><td>Invoice Subtotal</td><td>${money(subtotal)}</td></tr><tr><td>GST Included</td><td>${money(gstTotal)}</td></tr><tr><td>Total Paid</td><td>$0.00</td></tr><tr><td>Total Credited</td><td>$0.00</td></tr><tr class="due"><td>Amount Owing</td><td>${money(total)}</td></tr></tbody></table></div>
+        <section class="section"><h3>Payment Options</h3><div class="payment"><div><strong>Electronic Funds Transfer (EFT)</strong><br>${b.bsb ? `BSB: ${escapeHTML(b.bsb)}<br>` : ""}${b.account ? `Account Number: ${escapeHTML(b.account)}<br>` : ""}${b.accountName ? `Account Name: ${escapeHTML(b.accountName)}<br>` : ""}${b.remittanceEmail ? `Please email remittance advice to ${escapeHTML(b.remittanceEmail)}<br>` : ""}<span class="small">Please use the invoice number as your payment reference. Please ensure the payment reference is clearly stated on the bank transfer.</span></div>
+          <div><b>Amount Owing:</b> ${money(total)}<br>${order.dueDate ? `<b>Due Date:</b> ${escapeHTML(order.dueDate)}<br>` : ""}<b>Payment Reference:</b> ${escapeHTML(number)}</div></div></section>
+        ${b.contact ? `<section class="section"><h3>Contact</h3>${escapeHTML(b.contact)}${b.phone ? ` · ${escapeHTML(b.phone)}` : ""}</section>` : ""}
+        <div class="thanks">Thank you for your business.</div>
+      </main></body></html>`;
     invoiceWindow.document.open(); invoiceWindow.document.write(doc); invoiceWindow.document.close();
   }
 
@@ -364,6 +384,10 @@
     $("businessContact").value = b.contact || "";
     $("businessPhone").value = b.phone || "";
     $("businessAddress").value = b.address || "";
+    $("businessBsb").value = b.bsb || "";
+    $("businessAccount").value = b.account || "";
+    $("businessAccountName").value = b.accountName || "";
+    $("businessRemittanceEmail").value = b.remittanceEmail || "";
   }
   renderBusinessSettings();
   $("businessSettingsForm").addEventListener("submit", event => {
@@ -373,7 +397,11 @@
       abn: $("businessAbn").value.trim(),
       contact: $("businessContact").value.trim(),
       phone: $("businessPhone").value.trim(),
-      address: $("businessAddress").value.trim()
+      address: $("businessAddress").value.trim(),
+      bsb: $("businessBsb").value.trim(),
+      account: $("businessAccount").value.trim(),
+      accountName: $("businessAccountName").value.trim(),
+      remittanceEmail: $("businessRemittanceEmail").value.trim()
     };
     saveData();
     showToast("企业资料已保存");

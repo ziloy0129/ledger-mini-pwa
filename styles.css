@@ -70,3 +70,7 @@
 .line-gst-label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted,#687386)}
 .line-gst-label select{max-width:190px;min-width:150px}
 @media print{.business-settings-form{display:none}}
+
+/* Invoice business/payment profile fields */
+.business-settings-form .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:420px){.business-settings-form .form-grid{grid-template-columns:1fr}}

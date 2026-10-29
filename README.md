@@ -67,3 +67,10 @@ GitHub Pages is static hosting. The repository's app code is public if the repos
 - 移除了不再显示的独立发票页面的残留事件绑定，避免找不到页面元素时 JavaScript 初始化中断。
 - 订单详情中的“导出 Invoice”保留为唯一开票入口。
 - 侧边栏菜单点击逻辑与遮罩层保持独立，更新 Service Worker 缓存版本以便客户端加载新代码。
+
+
+## Invoice 格式更新
+- 发票采用正式 Tax Invoice 风格：供应商信息、ABN、客户信息、Invoice Number、Invoice Date、Due Date、Service Details、Qty、Rate、GST、Total、Invoice Subtotal、GST Included、Amount Owing、Payment Options。
+- 设置页面新增 BSB、银行账号、账户名称和收款通知邮箱字段。
+- Invoice 页面提供返回订单按钮及打印/保存 PDF 按钮。
+- PDF 下载由浏览器打印功能完成；在打印对话框选择 Save as PDF。
