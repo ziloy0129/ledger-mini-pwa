@@ -98,6 +98,24 @@
         <div id="ordersList" class="list-stack"></div>
       </section>
 
+      <section class="view" id="projectsView">
+        <div class="page-heading">
+          <div><p class="eyebrow">SERVICE CATALOGUE</p><h2>项目与单价</h2></div>
+          <button class="primary-button compact" id="addProjectBtn">＋ 新项目</button>
+        </div>
+        <p class="muted small">维护可收费项目。创建订单或发票时，可选择项目并填写数量。</p>
+        <div id="projectsList" class="list-stack"></div>
+      </section>
+
+      <section class="view" id="invoicesView">
+        <div class="page-heading">
+          <div><p class="eyebrow">BILLING</p><h2>发票</h2></div>
+          <button class="primary-button compact" id="addInvoiceBtn">＋ 新发票</button>
+        </div>
+        <label class="search-box"><span>⌕</span><input id="invoiceSearch" type="search" placeholder="搜索发票编号、客户…" autocomplete="off"></label>
+        <div id="invoicesList" class="list-stack"></div>
+      </section>
+
       <section class="view" id="settingsView">
         <div class="page-heading">
           <div><p class="eyebrow">YOUR WORKSPACE</p><h2>设置</h2></div>
@@ -129,6 +147,8 @@
       <button class="tab active" data-view="dashboard"><span class="tab-icon">⌂</span><span>概览</span></button>
       <button class="tab" data-view="customers"><span class="tab-icon">◎</span><span>客户</span></button>
       <button class="tab" data-view="orders"><span class="tab-icon">▤</span><span>订单</span></button>
+      <button class="tab" data-view="projects"><span class="tab-icon">◇</span><span>项目</span></button>
+      <button class="tab" data-view="invoices"><span class="tab-icon">▧</span><span>发票</span></button>
       <button class="tab" data-view="settings"><span class="tab-icon">⚙</span><span>设置</span></button>
     </nav>
   </div>
@@ -157,15 +177,52 @@
       <label>订单名称 <em>*</em><input id="orderTitle" required maxlength="120" placeholder="例如：Storage & handling"></label>
       <label>客户 <select id="orderCustomer"><option value="">选择客户（可选）</option></select></label>
       <div class="form-grid">
-        <label>金额（AUD）<em>*</em><input id="orderAmount" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+        <label>订单金额（AUD）<input id="orderAmount" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
         <label>状态<select id="orderStatus"><option>待处理</option><option>处理中</option><option>已完成</option><option>已取消</option></select></label>
       </div>
+      <div class="line-items-heading"><strong>收费项目</strong><button type="button" class="text-button" id="addOrderLineBtn">＋ 添加项目</button></div>
+      <div id="orderLineItems" class="line-items"></div>
+      <p class="muted small">选择已维护的项目后，单价和数量会自动计算订单金额；也可手动填写订单金额。</p>
       <div class="form-grid">
         <label>订单日期<input id="orderDate" type="date" required></label>
         <label>交付日期<input id="orderDueDate" type="date"></label>
       </div>
       <label>备注<textarea id="orderNotes" rows="3" maxlength="1000" placeholder="订单说明…"></textarea></label>
       <div class="dialog-actions"><button type="button" class="secondary-button" data-close="orderDialog">取消</button><button type="submit" class="primary-button">保存订单</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="projectDialog" class="sheet-dialog">
+    <form id="projectForm" class="dialog-form">
+      <div class="sheet-handle"></div>
+      <div class="dialog-heading"><div><p class="eyebrow">BILLABLE SERVICE</p><h2 id="projectDialogTitle">新项目</h2></div><button type="button" class="close-button" data-close="projectDialog">×</button></div>
+      <input type="hidden" id="projectId">
+      <label>项目名称 <em>*</em><input id="projectName" required maxlength="120" placeholder="例如：Storage fee"></label>
+      <div class="form-grid">
+        <label>单位<input id="projectUnit" maxlength="30" placeholder="例如：hour / pallet / trip" value="unit"></label>
+        <label>单价（AUD）<em>*</em><input id="projectRate" type="number" min="0" step="0.01" required inputmode="decimal" placeholder="0.00"></label>
+      </div>
+      <label>说明<input id="projectDescription" maxlength="300" placeholder="可选"></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="projectDialog">取消</button><button type="submit" class="primary-button">保存项目</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="invoiceDialog" class="sheet-dialog">
+    <form id="invoiceForm" class="dialog-form">
+      <div class="sheet-handle"></div>
+      <div class="dialog-heading"><div><p class="eyebrow">INVOICE DETAILS</p><h2 id="invoiceDialogTitle">新发票</h2></div><button type="button" class="close-button" data-close="invoiceDialog">×</button></div>
+      <input type="hidden" id="invoiceId">
+      <label>客户 <em>*</em><select id="invoiceCustomer" required></select></label>
+      <div class="form-grid">
+        <label>发票日期<input id="invoiceDate" type="date" required></label>
+        <label>到期日期<input id="invoiceDueDate" type="date"></label>
+      </div>
+      <label>关联订单（可选）<select id="invoiceOrder"><option value="">不关联订单</option></select></label>
+      <div class="line-items-heading"><strong>发票项目</strong><button type="button" class="text-button" id="addInvoiceLineBtn">＋ 添加项目</button></div>
+      <div id="invoiceLineItems" class="line-items"></div>
+      <div class="invoice-total-row"><span>合计（AUD）</span><strong id="invoiceTotal">$0.00</strong></div>
+      <label>备注<input id="invoiceNotes" maxlength="500" placeholder="付款条款或其他说明"></label>
+      <div class="dialog-actions"><button type="button" class="secondary-button" data-close="invoiceDialog">取消</button><button type="submit" class="primary-button">保存发票</button></div>
     </form>
   </dialog>
 

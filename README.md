@@ -53,3 +53,11 @@ GitHub Pages is static hosting. The repository's app code is public if the repos
 - UI: `styles.css`
 - Features/data model: `app.js`
 - Offline cache: `service-worker.js`
+
+
+## 新增：收费项目与发票
+- 在“项目”中维护项目名称、单位和 AUD 单价。
+- 创建订单时可添加收费项目，按数量和单价计算订单金额。
+- 在订单详情点击“生成发票”，可从订单项目创建发票，也可在“发票”中独立创建。
+- 发票可选择客户、日期、到期日、项目和数量；点击发票详情中的“打印 / 保存 PDF”，可打印或另存为 PDF。
+- 发票默认不计算 GST；如需 GST，请确认适用税务规则后再自行注明或升级税务字段。
